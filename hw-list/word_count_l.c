@@ -26,34 +26,13 @@
 
 #include "word_count.h"
 
-void init_words(word_count_list_t* wclist) {
-#ifndef PTHREADS
-  list_init(wclist);
-#else
-  list_init(wclist.lst);
-#endif
-}
+void init_words(word_count_list_t* wclist) { list_init(wclist); }
 
-size_t len_words(word_count_list_t* wclist) {
-  size_t size;
-#ifndef PTHREADS
-  size = list_size(wclist);
-#else
-  size = list_size(wclist.lst)
-#endif
-  return size;
-}
+size_t len_words(word_count_list_t* wclist) { return list_size(wclist); }
 
 word_count_t* find_word(word_count_list_t* wclist, char* word) {
-  struct list* list;
-#ifndef PTHREADS
-  list = wclist;
-#else
-  list = wclist.lst;
-#endif
-
   struct list_elem* e;
-  for (e = list_begin(list); e != list_end(list); e = list_next(e)) {
+  for (e = list_begin(wclist); e != list_end(wclist); e = list_next(e)) {
     word_count_t* wc = list_entry(e, word_count_t, elem);
     if (strcmp(wc->word, word) != 0) {
       continue;
@@ -64,12 +43,6 @@ word_count_t* find_word(word_count_list_t* wclist, char* word) {
 }
 
 word_count_t* add_word(word_count_list_t* wclist, char* word) {
-  struct list* list;
-#ifndef PTHREADS
-  list = wclist;
-#else
-  list = wclist.lst;
-#endif
   word_count_t* wc_add = find_word(wclist, word);
   if (wc_add != NULL) {
     wc_add->count++;
@@ -77,20 +50,14 @@ word_count_t* add_word(word_count_list_t* wclist, char* word) {
     wc_add = (word_count_t*)malloc(sizeof(word_count_t));
     wc_add->count = 1;
     wc_add->word = word;
-    list_push_back(list, &wc_add->elem);
+    list_push_back(wclist, &wc_add->elem);
   }
   return wc_add;
 }
 
 void fprint_words(word_count_list_t* wclist, FILE* outfile) {
-  struct list* list;
-#ifndef PTHREADS
-  list = wclist;
-#else
-  list = wclist.lst;
-#endif
   struct list_elem* e;
-  for (e = list_begin(list); e != list_end(list); e = list_next(e)) {
+  for (e = list_begin(wclist); e != list_end(wclist); e = list_next(e)) {
     word_count_t* wc = list_entry(e, word_count_t, elem);
     char buffer[50];
     sprintf(buffer, "%s: %d", wc->word, wc->count);
@@ -108,12 +75,5 @@ static bool less_list(const struct list_elem* ewc1, const struct list_elem* ewc2
 
 void wordcount_sort(word_count_list_t* wclist,
                     bool less(const word_count_t*, const word_count_t*)) {
-
-  struct list* list;
-#ifndef PTHREADS
-  list = wclist;
-#else
-  list = wclist.lst;
-#endif
-  list_sort(list, less_list, less);
+  list_sort(wclist, less_list, less);
 }
