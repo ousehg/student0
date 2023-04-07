@@ -53,46 +53,43 @@ void* thread_per_file(void* threadargs) {
  * main - handle command line, spawning one thread per file.
  */
 int main(int argc, char* argv[]) {
-  // int rc;
-  // int nthreads = NUM_THREADS;
+  int rc;
+  int nthreads = NUM_THREADS;
 
   /* Create the empty data structure. */
   word_count_list_t word_counts;
   init_words(&word_counts);
 
-  // pthread_t threads[argc];
+  pthread_t threads[argc];
+  thread_args_t args[argc];
 
   if (argc <= 1) {
     /* Process stdin in a single thread. */
     count_words(&word_counts, stdin);
   } else {
-    // nthreads = argc - 1;
+    nthreads = argc - 1;
+    int t;
 
-    // for (int t = 0; t < nthreads; t++) {
-    //   thread_args_t args;
-    //   args.threadid = t;
-    //   args.file_name = argv[t + 1];
-    //   args.wclist = &word_counts;
-    //   rc = pthread_create(&threads[t], NULL, thread_per_file, (void*)&args);
-    //   if (rc) {
-    //     printf("ERROR; return code from pthread_create() is %d\n", rc);
-    //     exit(-1);
-    //   }
-    // }
+    for (t = 0; t < nthreads; t++) {
+      args[t].threadid = t;
+      args[t].file_name = argv[t + 1];
+      args[t].wclist = &word_counts;
+      rc = pthread_create(&threads[t], NULL, thread_per_file, (void*)&args[t]);
+      if (rc) {
+        printf("ERROR; return code from pthread_create() is %d\n", rc);
+        exit(-1);
+      }
+    }
 
-    // for (int t = 0; t < nthreads; t++) {
-    //   rc = pthread_join(threads[t], NULL);
-    //   if (rc) {
-    //     fprintf(stderr, "Error joining thread %d: %d\n", t, rc);
-    //     exit(-1);
-    //   }
-    //   printf("Thread #%d finished\n", t);
-    // }
+    for (t = 0; t < nthreads; t++) {
+      rc = pthread_join(threads[t], NULL);
+      if (rc) {
+        fprintf(stderr, "Error joining thread %d: %d\n", t, rc);
+        exit(-1);
+      }
+      printf("Thread #%d finished\n", t);
+    }
   }
-
-  FILE* f = fopen(argv[1], "r");
-  count_words(&word_counts, f);
-  fclose(f);
 
   /* Output final result of all threads' work. */
   wordcount_sort(&word_counts, less_count);
